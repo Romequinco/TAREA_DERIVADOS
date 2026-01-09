@@ -1,8 +1,6 @@
 # Sistema Avanzado de Trading y Análisis de Opciones sobre SPY
 
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Status: Active](https://img.shields.io/badge/status-active-success.svg)](https://github.com)
+Sistema completo de análisis y trading de opciones sobre SPY (SPDR S&P 500 ETF Trust) para ingeniería financiera cuantitativa y trading algorítmico profesional.
 
 ## Descripción Ejecutiva
 
@@ -41,73 +39,277 @@ El sistema incluye:
 
 ## Arquitectura del Sistema
 
+### Diagrama de Arquitectura General
+
 ```
 ┌─────────────────────────────────────────────────────────┐
-│ TRADING SYSTEM │
+│ SISTEMA DE TRADING Y ANÁLISIS DE OPCIONES SPY           │
 ├─────────────────────────────────────────────────────────┤
-│ │
-│ ┌──────────────┐ ┌──────────────┐ │
-│ │ IB Gateway │◄────►│ ib_insync │ │
-│ │ / TWS │ │ Connection │ │
-│ └──────────────┘ └──────┬───────┘ │
-│ │ │
-│ ▼ │
-│ ┌───────────────────┐ │
-│ │ Data Collection │ │
-│ │ - Option Chains │ │
-│ │ - Market Data │ │
-│ │ - Greeks │ │
-│ └─────────┬─────────┘ │
-│ │ │
-│ ┌───────────────────┼───────────────────┐ │
-│ ▼ ▼ ▼ │
-│ ┌─────────────┐ ┌──────────────┐ ┌──────────┐ │
-│ │ Black- │ │ Volatility │ │ Greeks │ │
-│ │ Scholes │ │ Estimation │ │ Engine │ │
-│ │ Engine │ │ │ │ │ │
-│ └──────┬──────┘ └──────┬───────┘ └────┬─────┘ │
-│ │ │ │ │
-│ └─────────────────┼─────────────────┘ │
-│ ▼ │
-│ ┌────────────────────────┐ │
-│ │ Strategy Execution │ │
-│ │ - Straddle │ │
-│ │ - Delta Hedging │ │
-│ │ - Risk Management │ │
-│ └────────────┬───────────┘ │
-│ │ │
-│ ▼ │
-│ ┌────────────────────────┐ │
-│ │ Order Management │ │
-│ │ - Simulation │ │
-│ │ - Execution │ │
-│ │ - Monitoring │ │
-│ └────────────────────────┘ │
-│ │
-└─────────────────────────────────────────────────────────┘
+│                                                          │
+│ ┌────────────────────────────────────────────────────┐ │
+│ │ CAPA 1: CONEXIÓN Y DATOS                           │ │
+│ │                                                     │ │
+│ │  ┌──────────────┐      ┌──────────────┐          │ │
+│ │  │ IB Gateway   │◄────►│ ib_insync    │          │ │
+│ │  │ / TWS        │      │ Connection   │          │ │
+│ │  └──────────────┘      └──────┬───────┘          │ │
+│ │                                │                   │ │
+│ │  ┌─────────────────────────────▼──────────────┐  │ │
+│ │  │ Data Collection Layer                       │  │ │
+│ │  │ - Option Chains (reqSecDefOptParams)        │  │ │
+│ │  │ - Market Data (reqMktData)                  │  │ │
+│ │  │ - Historical Data (reqHistoricalData)       │  │ │
+│ │  │ - Greeks (reqMktData + modelGreeks)         │  │ │
+│ │  └──────────────────┬──────────────────────────┘  │ │
+│ └─────────────────────┼──────────────────────────────┘ │
+│                       │                                 │
+│ ┌─────────────────────▼──────────────────────────────┐ │
+│ │ CAPA 2: PROCESAMIENTO Y CÁLCULOS                    │ │
+│ │                                                     │ │
+│ │  ┌──────────────┐  ┌──────────────┐  ┌─────────┐ │ │
+│ │  │ Black-Scholes│  │ Volatility   │  │ Greeks  │ │ │
+│ │  │ Engine       │  │ Estimation   │  │ Engine  │ │ │
+│ │  │              │  │              │  │         │ │ │
+│ │  │ - bs_price() │  │ - IV Bisect  │  │ - Delta │ │ │
+│ │  │ - European   │  │ - Calibration│  │ - Gamma │ │ │
+│ │  │ - American   │  │ - Validation │  │ - Theta │ │ │
+│ │  │   (QuantLib) │  │              │  │ - Vega  │ │ │
+│ │  └──────┬───────┘  └──────┬───────┘  └────┬────┘ │ │
+│ │         │                 │                │       │ │
+│ │         └─────────┬───────┴────────┬───────┘       │ │
+│ │                   ▼                ▼               │ │
+│ │         ┌──────────────────────────────────────┐  │ │
+│ │         │ Analysis & Validation Layer          │  │ │
+│ │         │ - Compare BS vs IBKR                 │  │ │
+│ │         │ - Error Analysis                     │  │ │
+│ │         │ - Statistical Metrics                │  │ │
+│ │         └──────────────────┬───────────────────┘  │ │
+│ └────────────────────────────┼──────────────────────┘ │
+│                               │                         │
+│ ┌─────────────────────────────▼──────────────────────┐ │
+│ │ CAPA 3: ESTRATEGIAS Y SIMULACIÓN                     │ │
+│ │                                                     │ │
+│ │  ┌──────────────────┐    ┌──────────────────┐     │ │
+│ │  │ Delta Hedging    │    │ Long Straddle   │     │ │
+│ │  │                  │    │ Strategy        │     │ │
+│ │  │ - Rebalancing    │    │                  │     │ │
+│ │  │ - P&L Tracking   │    │ - Entry/Exit    │     │ │
+│ │  │ - Cost Analysis  │    │ - Backtesting   │     │ │
+│ │  └────────┬─────────┘    └────────┬─────────┘     │ │
+│ │           │                       │                │ │
+│ │           └───────────┬───────────┘                │ │
+│ │                       ▼                            │ │
+│ │         ┌────────────────────────────┐            │ │
+│ │         │ Order Simulation           │            │ │
+│ │         │ - Combo vs Legged          │            │ │
+│ │         │ - Slippage Analysis        │            │ │
+│ │         │ - Execution Risk           │            │ │
+│ │         └────────────┬───────────────┘            │ │
+│ └──────────────────────┼────────────────────────────┘ │
+│                        │                                │
+│ ┌──────────────────────▼──────────────────────────────┐ │
+│ │ CAPA 4: VISUALIZACIÓN Y OUTPUTS                      │ │
+│ │                                                     │ │
+│ │  ┌──────────────┐    ┌──────────────┐            │ │
+│ │  │ HTML Outputs │    │ PNG Outputs  │            │ │
+│ │  │ (Plotly)     │    │ (Matplotlib) │            │ │
+│ │  │              │    │              │            │ │
+│ │  │ - Surfaces   │    │ - Evolution  │            │ │
+│ │  │ - Smiles     │    │ - P&L Charts │            │ │
+│ │  │ - Greeks     │    │ - Comparisons│            │ │
+│ │  │ - Historical │    │              │            │ │
+│ │  └──────────────┘    └──────────────┘            │ │
+│ │                                                     │ │
+│ │  ┌──────────────┐    ┌──────────────┐            │ │
+│ │  │ CSV Outputs  │    │ Tables       │            │ │
+│ │  │              │    │              │            │ │
+│ │  │ - Chains     │    │ - Formatted  │            │ │
+│ │  │ - Results    │    │ - Summary    │            │ │
+│ │  └──────────────┘    └──────────────┘            │ │
+│ └─────────────────────────────────────────────────────┘ │
+│                                                          │
+└──────────────────────────────────────────────────────────┘
+```
+
+### Flujo de Datos Principal
+
+```
+┌─────────────┐
+│ Interactive │
+│  Brokers    │
+│  (IBKR)     │
+└──────┬──────┘
+       │
+       │ reqSecDefOptParams
+       │ reqMktData
+       │ reqHistoricalData
+       ▼
+┌──────────────────┐
+│ Data Collection  │
+│ - Option Chains  │
+│ - Market Prices  │
+│ - Greeks (IBKR)  │
+└──────┬───────────┘
+       │
+       │ DataFrame (df_chain)
+       ▼
+┌──────────────────┐
+│ Black-Scholes    │
+│ Calculations     │
+│ - bs_price()     │
+│ - bs_greeks()    │
+│ - implied_vol()  │
+└──────┬───────────┘
+       │
+       │ Results
+       ▼
+┌──────────────────┐
+│ Validation &     │
+│ Comparison       │
+│ - BS vs IBKR     │
+│ - Error Metrics  │
+└──────┬───────────┘
+       │
+       │ Validated Data
+       ▼
+┌──────────────────┐
+│ Strategy         │
+│ Execution        │
+│ - Delta Hedging  │
+│ - Straddle       │
+│ - Simulations    │
+└──────┬───────────┘
+       │
+       │ Performance Metrics
+       ▼
+┌──────────────────┐
+│ Outputs          │
+│ - HTML (Plotly)  │
+│ - PNG (Matplotlib│
+│ - CSV (Data)     │
+└──────────────────┘
 ```
 
 ### Componentes Principales
 
-1. **BlackScholesModel**: Implementación completa del modelo Black-Scholes
- - Cálculo de precios (Call/Put)
- - Todas las griegas (Delta, Gamma, Theta, Vega, Rho)
- - Volatilidad implícita (Newton-Raphson + Brent)
+#### 1. Black-Scholes Engine
 
-2. **IBConnection**: Gestión de conexión con Interactive Brokers
- - Manejo robusto de errores
- - Reconexión automática
- - Modo simulación para desarrollo
+Implementación completa del modelo Black-Scholes con todas las funcionalidades:
 
-3. **DeltaHedger**: Sistema de delta hedging profesional
- - Rebalanceo automático
- - Tracking de P&L
- - Análisis de costos de transacción
+```
+FUNCIONES PRINCIPALES:
+├── bs_price(S, K, T, r, q, sigma, right)
+│   └── Calcula precio teórico Call/Put
+│
+├── bs_greeks_manual(S, K, T, r, q, sigma, right)
+│   └── Calcula todas las griegas:
+│       ├── Delta: Sensibilidad al precio del subyacente
+│       ├── Gamma: Sensibilidad de Delta
+│       ├── Theta: Decaimiento temporal
+│       ├── Vega: Sensibilidad a volatilidad
+│       └── Rho: Sensibilidad a tasa de interés
+│
+└── implied_vol_bisect(price_mkt, S, K, T, r, q, right)
+    └── Calcula volatilidad implícita por bisección
+```
 
-4. **LongStraddleStrategy**: Estrategia de trading con backtesting
- - Entrada/salida configurable
- - Stop loss y take profit
- - Métricas de performance completas
+**Características**:
+- Soporte para opciones europeas (implementación propia)
+- Soporte para opciones americanas (QuantLib opcional)
+- Manejo robusto de casos edge (vencimiento cercano, strikes extremos)
+- Validación contra datos del broker
+
+#### 2. Interactive Brokers Connection
+
+Gestión profesional de conexión con Interactive Brokers:
+
+```
+CONEXIÓN IBKR:
+├── Configuración
+│   ├── Host: 127.0.0.1 (local)
+│   ├── Port: 7497 (Paper) / 7496 (Live)
+│   └── ClientId: Único por conexión
+│
+├── Funcionalidades
+│   ├── reqSecDefOptParams: Obtener cadenas de opciones
+│   ├── reqMktData: Datos de mercado en tiempo real
+│   ├── reqHistoricalData: Datos históricos
+│   └── reqContractDetails: Detalles de contratos
+│
+└── Manejo de Errores
+    ├── Reconexión automática
+    ├── Validación de datos
+    └── Modo simulación (fallback)
+```
+
+**Características**:
+- Manejo robusto de errores y timeouts
+- Reconexión automática en caso de desconexión
+- Modo simulación para desarrollo sin IB
+- Validación de permisos y suscripciones
+
+#### 3. Delta Hedging System
+
+Sistema completo de delta hedging con análisis profesional:
+
+```
+DELTA HEDGING:
+├── Inicialización
+│   ├── Posición inicial (Call/Put, cantidad)
+│   ├── Parámetros financieros (S, K, T, r, q, sigma)
+│   └── Configuración de rebalanceo
+│
+├── Proceso de Hedging
+│   ├── Cálculo de delta actual
+│   ├── Determinación de shares necesarias
+│   ├── Ejecución de rebalanceo
+│   └── Tracking de costos de transacción
+│
+└── Análisis de Resultados
+    ├── P&L acumulado (hedged vs unhedged)
+    ├── Volatilidad del P&L
+    ├── Número de rebalances
+    └── Costos totales de transacción
+```
+
+**Características**:
+- Rebalanceo automático basado en umbral de delta
+- Tracking completo de P&L con y sin hedging
+- Análisis de costos de transacción
+- Visualización comparativa de resultados
+
+#### 4. Long Straddle Strategy
+
+Estrategia de trading con backtesting completo:
+
+```
+LONG STRADDLE:
+├── Configuración
+│   ├── Frecuencia de entrada (días)
+│   ├── Stop loss (%)
+│   ├── Take profit (%)
+│   └── Strike spacing
+│
+├── Backtesting
+│   ├── Simulación histórica
+│   ├── Entrada/salida automática
+│   ├── Gestión de riesgo
+│   └── Cálculo de métricas
+│
+└── Métricas de Performance
+    ├── Total Return
+    ├── Win Rate
+    ├── Sharpe Ratio
+    ├── Max Drawdown
+    └── Profit Factor
+```
+
+**Características**:
+- Backtesting histórico completo
+- Entrada/salida configurable
+- Stop loss y take profit automáticos
+- Métricas de performance profesionales
+- Comparación con versión delta-hedged
 
 ---
 
@@ -159,7 +361,7 @@ Si deseas usar datos reales de Interactive Brokers:
 ### Paso 5: Verificar Instalación
 
 ```bash
-python -c "import numpy, pandas, scipy, matplotlib, seaborn, plotly; print('✓ Todas las dependencias instaladas')"
+python -c "import numpy, pandas, scipy, matplotlib, seaborn, plotly; print('Todas las dependencias instaladas correctamente')"
 ```
 
 ---
@@ -227,91 +429,212 @@ Para facilitar la lectura del código, aquí está el mapeo de variables princip
 
 ### Ejecutar el Notebook Principal
 
-El notebook es **completamente autónomo** e incluye todas las funciones necesarias.
+El notebook es completamente autónomo e incluye todas las funciones necesarias.
 
+**Opción 1: Jupyter Notebook**
 ```bash
 jupyter notebook notebook_principal.ipynb
 ```
 
-O usando JupyterLab:
-
+**Opción 2: JupyterLab (Recomendado)**
 ```bash
 jupyter lab notebook_principal.ipynb
 ```
 
-**Nota**: El notebook incluye implementaciones completas de todas las funciones necesarias, por lo que no requiere código adicional.
+**Nota**: El notebook incluye implementaciones completas de todas las funciones necesarias. No requiere ejecutar `EJERCICIO_MIAX_2025.ipynb` primero, aunque puede reutilizar sus funciones si están disponibles en el mismo kernel.
 
 ### Estructura del Notebook
 
-El notebook está organizado en secciones numeradas:
+El notebook está organizado en tres partes principales:
 
-1. **Configuración e Imports**: Configuración inicial y librerías
-2. **Black-Scholes**: Implementación completa del modelo
-3. **Conexión IB**: Gestión de conexión con broker
-4. **Option Chains**: Obtención y análisis de cadenas de opciones
-5. **Volatilidad Implícita**: Cálculo y comparación
-6. **Visualizaciones**: Volatility smiles, surfaces, term structure
-7. **Griegas**: Cálculo y comparación con broker
-8. **Evolución Temporal**: Análisis histórico de opciones
-9. **Delta Hedging**: Simulación de cobertura
-10. **Long Straddle**: Estrategia con backtesting
-11. **Simulación de Órdenes**: Análisis de riesgo de ejecución
-12. **SPY vs SPX**: Comparación exhaustiva
+#### Parte 1: Configuración y Setup
+
+```
+CONFIGURACIÓN
+├── Imports y librerías
+├── setup_output_directories() → Crea estructura de carpetas
+├── Verificación de funciones del código original
+└── Funciones compatibles (si no están disponibles)
+```
+
+#### Parte 2: Objetivos Clase 1 - Fundamentos y Análisis
+
+```
+OBJETIVOS IMPLEMENTADOS:
+├── 1.6: Evolución Temporal Histórica de Opciones
+│   ├── Simulación de trayectoria de precios
+│   ├── Cálculo iterativo de griegas
+│   ├── Visualización completa (6 subgráficos)
+│   └── Guardado: images/greeks_evolution/ + outputs/csv/results/
+│
+├── 1.7: Delta Hedging Profesional
+│   ├── Clase DeltaHedger
+│   ├── Rebalanceo automático
+│   ├── Tracking de P&L
+│   └── Guardado: images/pnl_analysis/
+│
+└── 1.8: Simulación de Órdenes
+    ├── Combo vs Legged orders
+    ├── Análisis de slippage
+    └── Guardado: images/pnl_analysis/
+```
+
+#### Parte 3: Objetivos Clase 2 - Estrategias y Trading Avanzado
+
+```
+OBJETIVOS IMPLEMENTADOS:
+├── 2.1: Estrategia Long Straddle
+│   ├── Backtesting histórico
+│   ├── Métricas de performance
+│   └── Guardado: images/pnl_analysis/
+│
+├── 2.2: Delta-Hedged Straddle
+│   ├── Comparación con straddle sin hedge
+│   ├── Análisis de costos
+│   └── Guardado: images/pnl_analysis/
+│
+└── 2.5: Neutralización con Opciones
+    ├── Cálculo de ratio de neutralización
+    ├── Análisis de exposición residual
+    └── Guardado: images/pnl_analysis/
+```
 
 ### Parámetros Configurables
 
-Puedes modificar los siguientes parámetros en el notebook:
+Puedes modificar los siguientes parámetros en el notebook según tus necesidades:
 
+**Parámetros Financieros Base**:
 ```python
-# Precio spot de SPY
-SPY_SPOT = 450.0
+# Precio spot de SPY (se obtiene de IB o se simula)
+S = 450.0
 
-# Tasa libre de riesgo
-r = 0.05 # 5%
+# Tasa libre de riesgo (anual)
+r = 0.05  # 5%
 
-# Volatilidad base
-sigma = 0.15 # 15%
+# Dividend yield (anual)
+q = 0.00  # 0% (simplificación común)
+
+# Volatilidad base (anual)
+sigma = 0.15  # 15%
+```
+
+**Parámetros de Opciones**:
+```python
+# Strike price
+K = 450.0  # ATM (At The Money)
+
+# Tiempo hasta vencimiento (años)
+T = 30/365.0  # 30 días
+
+# Tipo de opción
+right = 'C'  # 'C' para Call, 'P' para Put
+```
+
+**Parámetros de Estrategia**:
+```python
+# Frecuencia de entrada en días
+entry_frequency_days = 7
+
+# Stop loss (% del precio de entrada)
+stop_loss_pct = 0.50  # 50%
+
+# Take profit (% del precio de entrada)
+take_profit_pct = 1.0  # 100%
 
 # Filtros de liquidez
 min_volume = 100
 min_open_interest = 500
+```
 
-# Parámetros de estrategia
-entry_frequency_days = 7
-stop_loss_pct = 0.50
-take_profit_pct = 1.0
+**Parámetros de Delta Hedging**:
+```python
+# Umbral de delta para rebalanceo
+delta_threshold = 0.01  # Rebalancear si |delta| > 0.01
+
+# Costo de transacción por share
+transaction_cost_per_share = 0.01  # $0.01 por share
 ```
 
 ### Ejemplos de Output
 
-El notebook genera:
+El notebook genera y organiza automáticamente todos los outputs:
 
-- **Gráficos**: Guardados automáticamente en `images/`
-- **Datos**: Guardados en `data/option_chains/` y `data/results/`
+- **Gráficos HTML interactivos**: Guardados en `outputs/html/` organizados por tipo
+  - Volatility smiles: `outputs/html/volatility_smiles/`
+  - Análisis de griegas: `outputs/html/greeks/`
+  - Superficies de volatilidad: `outputs/html/volatility_surfaces/`
+  - Análisis históricos: `outputs/html/historical_analysis/`
+  - Simulaciones: `outputs/html/simulations/`
+- **Gráficos estáticos PNG**: Guardados en `images/` organizados por categoría
+  - Evolución de griegas: `images/greeks_evolution/`
+  - Análisis de P&L: `images/pnl_analysis/`
+  - Superficies de volatilidad: `images/volatility_surfaces/`
+- **Datos tabulares**: Guardados en `outputs/csv/`
+  - Cadenas de opciones: `outputs/csv/option_chains/`
+  - Resultados de análisis: `outputs/csv/results/`
+- **Tablas formateadas**: Guardadas en `outputs/tables/` para documentación
 - **Tablas comparativas**: Mostradas inline con formato profesional
-- **Métricas de performance**: Impresas en consola con análisis detallado
+- **Métricas de performance**: Impresas en consola con análisis detallado paso a paso
 
 ---
 
 ## Estructura del Proyecto
 
 ```
-PROYECTO_OPCIONES_SPY/
+TAREA_DERIVADOS/
 │
-├── notebook_principal.ipynb # Notebook principal completo (autónomo)
-├── README.md # Este archivo
-├── requirements.txt # Dependencias del proyecto
+├── EJERCICIO_MIAX_2025.ipynb      # Notebook original (Fase 1)
+├── notebook_principal.ipynb       # Notebook principal completo (autónomo)
+├── notebook_principal_backup.ipynb # Copia de seguridad
+├── README.md                       # Este archivo
+├── requirements.txt                # Dependencias del proyecto
 │
-├── data/ # Datos generados
-│ ├── option_chains/ # Cadenas de opciones (CSV)
-│ ├── historical_data/ # Datos históricos
-│ └── results/ # Resultados de backtesting
+├── venv/                           # Entorno virtual Python
 │
-└── images/ # Gráficos generados
- ├── architecture/ # Diagramas de arquitectura
- ├── volatility_surfaces/ # Volatility smiles y surfaces
- ├── greeks_evolution/ # Evolución de griegas
- └── pnl_analysis/ # Análisis de P&L
+├── outputs/                        # Todos los outputs organizados
+│ ├── html/                         # Gráficos HTML interactivos
+│ │   ├── volatility_smiles/        # Volatility smiles interactivos
+│ │   ├── greeks/                   # Análisis de griegas interactivos
+│ │   ├── volatility_surfaces/      # Superficies 3D interactivas
+│ │   ├── historical_analysis/      # Análisis históricos interactivos
+│ │   └── simulations/              # Simulaciones interactivas
+│ ├── csv/                          # Datos tabulares
+│ │   ├── option_chains/            # Cadenas de opciones (CSV)
+│ │   └── results/                  # Resultados de análisis (CSV)
+│ └── tables/                       # Tablas formateadas para documentación
+│
+└── images/                         # Gráficos estáticos PNG
+    ├── architecture/                # Diagramas de arquitectura
+    ├── volatility_surfaces/         # Superficies de volatilidad
+    ├── greeks_evolution/            # Evolución de griegas
+    └── pnl_analysis/                # Análisis de P&L
+```
+
+### Diagrama de Organización de Outputs
+
+```
+OUTPUTS ORGANIZADOS
+│
+├── outputs/html/           (Gráficos Interactivos - Plotly)
+│   ├── volatility_smiles/ → smile_V12_*.html
+│   ├── greeks/            → griegas_V12_*.html
+│   ├── volatility_surfaces/ → Superficie_V15_*.html
+│   ├── historical_analysis/ → Historico_V29_*.html
+│   └── simulations/       → Sim_V32_*.html
+│
+├── outputs/csv/           (Datos Tabulares)
+│   ├── option_chains/     → SPY_option_chain_*.csv
+│   └── results/           → option_evolution_*.csv
+│
+├── outputs/tables/        (Tablas Formateadas)
+│
+└── images/                (Gráficos Estáticos - Matplotlib)
+    ├── greeks_evolution/   → historical_evolution.png
+    └── pnl_analysis/      → delta_hedging_comparison.png
+                            → order_simulation.png
+                            → straddle_backtest.png
+                            → straddle_hedged_comparison.png
+                            → option_neutralization.png
 ```
 
 ---
@@ -320,9 +643,15 @@ PROYECTO_OPCIONES_SPY/
 
 ### 1. Volatility Surface 3D
 
-![Volatility Surface](images/volatility_surfaces/volatility_surface_3d.png)
-
 La superficie de volatilidad muestra cómo la volatilidad implícita varía con el strike y el tiempo hasta vencimiento, revelando el "volatility smile" característico.
+
+**Archivo generado**: `outputs/html/volatility_surfaces/Superficie_V15_SPY.html`
+
+**Características**:
+- Visualización 3D interactiva con Plotly
+- Permite rotación y zoom para análisis detallado
+- Muestra la relación entre strike, tiempo y volatilidad implícita
+- Identifica zonas de mayor/lower volatilidad implícita
 
 ### 2. Comparación de Griegas
 
@@ -337,26 +666,112 @@ Nuestros cálculos muestran alta correlación con los datos del broker, validand
 
 ### 3. Delta Hedging: Cubierta vs Desnuda
 
-![Delta Hedging](images/pnl_analysis/delta_hedging_comparison.png)
+**Archivo generado**: `images/pnl_analysis/delta_hedging_comparison.png`
 
 **Resultados de simulación (30 días):**
 
-- **Sin cobertura**: P&L final = $X.XX, Volatilidad = $Y.YY
-- **Con hedging**: P&L final = $X.XX, Volatilidad = $Y.YY, Rebalances = Z
+- **Sin cobertura**: P&L final variable, alta volatilidad
+- **Con hedging**: P&L más estable, menor volatilidad, múltiples rebalances
 
-El delta hedging reduce significativamente la volatilidad del P&L a costa de costos de transacción.
+El delta hedging reduce significativamente la volatilidad del P&L a costa de costos de transacción. El gráfico muestra la comparación visual entre ambas estrategias.
+
+**Análisis incluido**:
+- Evolución del P&L acumulado
+- Delta a lo largo del tiempo
+- Número de shares en hedge
+- Costos de transacción acumulados
 
 ### 4. Backtesting Long Straddle
 
-![Straddle Backtest](images/pnl_analysis/straddle_backtest.png)
+**Archivo generado**: `images/pnl_analysis/straddle_backtest.png`
 
-**Métricas de performance (1 año, entrada semanal):**
+**Métricas de performance calculadas (1 año, entrada semanal):**
 
-- Total Return: $X,XXX.XX
-- Win Rate: XX.XX%
-- Sharpe Ratio: X.XX
-- Max Drawdown: $X,XXX.XX
-- Profit Factor: X.XX
+- Total Return: Calculado automáticamente
+- Win Rate: Porcentaje de trades rentables
+- Sharpe Ratio: Risk-adjusted return
+- Max Drawdown: Pérdida máxima desde un pico
+- Profit Factor: Ratio de ganancias/pérdidas
+
+El gráfico muestra la evolución del equity curve, distribución de retornos, y análisis de drawdowns.
+
+---
+
+## Flujo de Trabajo del Sistema
+
+### Diagrama de Flujo Completo
+
+```
+INICIO DEL ANÁLISIS
+│
+├─► [PASO 1] Configuración Inicial
+│   ├── setup_output_directories() → Crea carpetas organizadas
+│   ├── Imports de librerías
+│   └── Verificación de funciones disponibles
+│
+├─► [PASO 2] Conexión a Interactive Brokers (Opcional)
+│   ├── Conectar a TWS/IB Gateway
+│   ├── Obtener precio spot de SPY (S)
+│   └── Obtener cadena de opciones (df_chain)
+│
+├─► [PASO 3] Cálculos Base
+│   ├── Calcular precios con bs_price()
+│   ├── Calcular griegas con bs_greeks_manual()
+│   └── Calcular IV con implied_vol_bisect()
+│
+├─► [PASO 4] Análisis y Visualización
+│   ├── Evolución temporal → outputs/csv/results/ + images/
+│   ├── Delta hedging → images/pnl_analysis/
+│   ├── Estrategias → images/pnl_analysis/
+│   └── Simulaciones → images/pnl_analysis/
+│
+└─► [PASO 5] Resultados y Outputs
+    ├── Gráficos HTML → outputs/html/
+    ├── Gráficos PNG → images/
+    ├── Datos CSV → outputs/csv/
+    └── Tablas → outputs/tables/
+```
+
+### Ejemplo de Ejecución Paso a Paso
+
+**1. Configuración Inicial**
+```
+[OK] Estructura de carpetas de outputs creada/verificada
+     - outputs/html/: Gráficos HTML interactivos
+     - outputs/csv/: Datos tabulares
+     - outputs/tables/: Tablas formateadas
+     - images/: Gráficos estáticos PNG
+[OK] Imports y configuración completados
+```
+
+**2. Ejecución de Análisis**
+```
+============================================================
+EVOLUCIÓN TEMPORAL: Opción C Strike $450.00
+============================================================
+Precio spot inicial: $450.00
+Tiempo inicial: 30 días
+Volatilidad: 15.00%
+============================================================
+
+[PASO 1] Simulando trayectoria del precio...
+  - Días simulados: 30
+  - Precio inicial: $450.00
+  - Drift esperado: 5.00% anual
+  - Volatilidad: 15.00% anual
+
+[PASO 2] Trayectoria simulada: 31 puntos
+  - Precio final: $452.34
+  - Cambio: +0.52%
+
+[PASO 3] Calculando griegas para cada día...
+```
+
+**3. Guardado de Resultados**
+```
+[OK] Tabla de evolución guardada: outputs/csv/results/option_evolution_C_450_30d.csv
+[OK] Gráfico de evolución histórica guardado: images/greeks_evolution/historical_evolution.png
+```
 
 ---
 
