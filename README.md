@@ -132,20 +132,6 @@ python -c "import numpy, pandas, scipy, matplotlib, seaborn, plotly; print('OK')
 
 ### Ejecutar el Notebook Principal
 
-```bash
-# Opción 1: Jupyter Notebook
-jupyter notebook notebook_principal.ipynb
-
-# Opción 2: JupyterLab (Recomendado)
-jupyter lab notebook_principal.ipynb
-```
-
-### Ejecutar el Notebook del Profesor
-
-```bash
-jupyter notebook EJERCICIO_MIAX_2025.ipynb
-```
-
 **Importante**: El `notebook_principal.ipynb` es completamente autónomo e incluye todas las funciones necesarias. Puede ejecutarse independientemente o en el mismo kernel donde se ejecutó el notebook del profesor.
 
 ---
@@ -167,42 +153,6 @@ jupyter notebook EJERCICIO_MIAX_2025.ipynb
 3. **Delta-hedging profesional** con función aplicar_delta_hedge y clase DeltaHedgedStraddleStrategy
 4. **Análisis exhaustivo de P&L** con funciones calcular_pnl_sin_hedge y calcular_pnl_con_hedge
 5. **Comparación estratégica** entre straddle normal y delta-hedged
-
----
-
-## Ejemplos de Uso
-
-### Construir un Long Straddle
-
-```python
-from notebook_principal import construir_long_straddle
-
-# Construir straddle ATM con 30 días hasta vencimiento
-straddle = construir_long_straddle(ticker='SPY', dias_vencimiento=30)
-print(f"Prima total: ${straddle['inversion_inicial']:.2f}")
-print(f"Strike: ${straddle['strike']:.2f}")
-```
-
-### Aplicar Delta-Hedging
-
-```python
-from notebook_principal import aplicar_delta_hedge
-
-# Aplicar hedging diario al straddle
-resultado_hedge = aplicar_delta_hedge(straddle, precios_historicos_spy)
-print(f"P&L final: ${resultado_hedge['metricas_resumen']['pnl_final']:.2f}")
-```
-
-### Backtesting de Estrategia
-
-```python
-from notebook_principal import LongStraddleStrategy
-
-# Crear estrategia y hacer backtesting
-strategy = LongStraddleStrategy(entry_frequency_days=7, exit_at_expiry=True)
-trades = strategy.backtest(S_prices, dates, r, q, sigma)
-metrics = strategy.calculate_metrics(trades)
-```
 
 ---
 
@@ -245,25 +195,3 @@ TAREA_DERIVADOS/
 - **Descomposición de P&L**: El análisis por contribución de griegas permite entender qué factores contribuyen más al resultado
 
 ---
-
-## Solución de Problemas
-
-### Error 10089: Datos de Mercado Requieren Suscripciones
-
-Si encuentras el error 10089 de Interactive Brokers, consulta `SOLUCION_ERROR_10089.md` para soluciones detalladas. El sistema incluye fallback automático a yfinance cuando no hay suscripciones disponibles.
-
----
-
-## Referencias
-
-- Black-Scholes Model: [Wikipedia](https://en.wikipedia.org/wiki/Black%E2%80%93Scholes_model)
-- Interactive Brokers API: [Documentación Oficial](https://interactivebrokers.github.io/tws-api/)
-- SPY Options: [CBOE](https://www.cboe.com/tradable_products/etps/spdr_sp_500_etf_trust/)
-
----
-
-## Autor
-
-Sistema de Trading Cuantitativo  
-Diciembre 2024  
-Versión 2.0
