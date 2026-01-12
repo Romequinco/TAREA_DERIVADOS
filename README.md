@@ -192,6 +192,6 @@ TAREA_DERIVADOS/
 - **Delta Hedging**: Transforma el straddle de apuesta direccional en apuesta pura sobre volatilidad
 - **Análisis de sensibilidad**: Los straddles ATM ofrecen el mejor balance entre coste y sensibilidad
 - **Backtesting**: La generación de datos de simulación permite validar estrategias sin datos históricos
-- **Descomposición de P&L**: El análisis por contribución de griegas permite entender qué factores contribuyen más al resultado
+- **Descomposición de P&L**: El análisis por contribución de griegas permite entender qué factores contribuyen más al resultado.
 
 ---
