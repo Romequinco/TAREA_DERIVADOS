@@ -12,20 +12,24 @@ Este proyecto está compuesto por **dos notebooks principales**:
    - Cálculo de griegas y volatilidad implícita
    - Visualización de volatility smiles y surfaces
 
-2. **`notebook_principal.ipynb`**: Notebook de la clase con todos los objetivos implementados
-   - Extensiones y objetivos completados sobre el código base
+2. **`notebook_final.ipynb`**: **Notebook final con toda la información completa y actualizada**
+   - **TODA LA INFORMACIÓN FINAL** está en este notebook
+   - Versión completa de todos los objetivos
    - Construcción y análisis de Long Straddle
    - Delta-hedging profesional
    - Backtesting completo de estrategias
    - Análisis exhaustivo de P&L histórico
+   - Simulación de ejecuciones (Combo vs Patas Sueltas)
+   - Análisis de riesgo de legging
+   - Reflexión técnica SPY vs SPX
 
 El código del profesor está **PRESERVADO COMPLETAMENTE** y el código nuevo **REUTILIZA** todas las funciones existentes manteniendo la nomenclatura original.
 
 ---
 
-## Estructura del Notebook Principal
+## Estructura del Notebook Final
 
-El `notebook_principal.ipynb` implementa 6 objetivos principales:
+El `notebook_final.ipynb` implementa todos los objetivos principales y contiene **toda la información final**:
 
 1. **Construcción de Long Straddle sobre SPY**
    - Funciones para construir straddles ATM
@@ -130,9 +134,9 @@ python -c "import numpy, pandas, scipy, matplotlib, seaborn, plotly; print('OK')
 
 ## Uso
 
-### Ejecutar el Notebook Principal
+### Ejecutar el Notebook Final
 
-**Importante**: El `notebook_principal.ipynb` es completamente autónomo e incluye todas las funciones necesarias. Puede ejecutarse independientemente o en el mismo kernel donde se ejecutó el notebook del profesor.
+**Importante**: El `notebook_final.ipynb` es completamente autónomo e incluye todas las funciones necesarias. **Este es el notebook que contiene toda la información final y actualizada**. Puede ejecutarse independientemente o en el mismo kernel donde se ejecutó el notebook del profesor.
 
 ---
 
@@ -146,13 +150,15 @@ python -c "import numpy, pandas, scipy, matplotlib, seaborn, plotly; print('OK')
 4. Visualización de volatility smiles y surfaces
 5. Cálculo de griegas (Delta, Gamma, Theta, Vega, Rho)
 
-### Extensiones en notebook_principal.ipynb
+### Extensiones en notebook_final.ipynb
 
 1. **Análisis de sensibilidad de Long Straddle** a diferentes strikes (ATM-2% a ATM+2%)
 2. **Backtesting de estrategias** con clase LongStraddleStrategy
 3. **Delta-hedging profesional** con función aplicar_delta_hedge y clase DeltaHedgedStraddleStrategy
 4. **Análisis exhaustivo de P&L** con funciones calcular_pnl_sin_hedge y calcular_pnl_con_hedge
 5. **Comparación estratégica** entre straddle normal y delta-hedged
+6. **Simulación de ejecuciones** (Combo vs Patas Sueltas) con análisis de riesgo de legging
+7. **Reflexión técnica** sobre diferencias entre SPY y SPX
 
 ---
 
@@ -171,10 +177,9 @@ python -c "import numpy, pandas, scipy, matplotlib, seaborn, plotly; print('OK')
 ```
 TAREA_DERIVADOS/
 ├── EJERCICIO_MIAX_2025.ipynb      # Notebook del profesor (código base)
-├── notebook_principal.ipynb        # Notebook de la clase (extensiones)
+├── notebook_final.ipynb            # Notebook final con toda la información completa 
 ├── requirements.txt                # Dependencias del proyecto
 ├── README.md                       # Este archivo
-├── SOLUCION_ERROR_10089.md         # Guía para error de datos de mercado
 ├── images/                         # Imágenes y gráficos
 │   ├── straddle_payoff.png
 │   ├── pnl_analysis/
